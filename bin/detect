@@ -10,5 +10,5 @@ BUILD_DIR="$1"
 # ensure there's a Procfile
 [ -f "$BUILD_DIR/Procfile" ] || exit 1
 
-echo 'Perl/Procfile'
+echo 'Perl/Procfile/Carton'
 exit 0
