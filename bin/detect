@@ -2,12 +2,9 @@
 
 BUILD_DIR="$1"
 
-# ensure there's something Perl-related
-[                                   \
-      -f "$BUILD_DIR/Makefile.PL"   \
-   -o -f "$BUILD_DIR/Build.PL"      \
-   -o -f "$BUILD_DIR/META.json"     \
-   -o -f "$BUILD_DIR/cpanfile"      \
+# ensure the carton files exists
+[      -f "$BUILD_DIR/cpanfile"            \
+    -a -f "$BUILD_DIR/cpanfile.snapshot"   \
 ] || exit 1
 
 # ensure there's a Procfile

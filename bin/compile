@@ -1,3 +1,4 @@
+#!/opt/local/bin/bash
 #!/usr/bin/env bash
 # vim: ft=sh :
 
@@ -38,6 +39,15 @@ build() {
    # execute in subshell to avoid change directory side effects
    (
       cd "$BUILD_DIR"
+      local CPANM_OPTS=''
+      [ -f "$ENV_DIR/PERL_CPANM_OPT" ] \
+         && CPANM_OPTS="$(cat "$ENV_DIR/PERL_CPANM_OPT")"
+
+      # if [ -e "$BUILD_DIR/.perl-verion" ] ; then
+      #     PERL_VERSION=$( cat $BUILD_DIR/.perl-version )
+      #
+      #     if [ -
+      # fi
 
       if [ ! -e "$BUILD_DIR/local/bin/cpanm" ]; then
          echo "-----> Bootstrapping cpanm"
@@ -51,30 +61,33 @@ build() {
             | indent
       fi
 
-      echo "-----> Installing dependencies"
-      local CPANM_OPTS=''
-      [ -f "$ENV_DIR/PERL_CPANM_OPT" ] \
-         && CPANM_OPTS="$(cat "$ENV_DIR/PERL_CPANM_OPT")"
-      declare -a EPAN
-      local _d d
-      for _d in epan dpan ; do
-         d="$PWD/$_d"
-         [ -d "$d" ] || continue
-         EPAN=("${EPAN[@]}" '--mirror' "file://$d")
-      done
-      if [ "${#EPAN[@]}" -gt 0 ] ; then
-         # append "usual" mirrors
-         EPAN=("${EPAN[@]}" '--mirror' 'http://www.cpan.org')
+      if [ ! -e "$BUILD_DIR/local/bin/carton" ]; then
+         echo "-----> Bootstrapping carton"
+         cpanm 2>&1                 \
+            --quiet                 \
+            --notest                \
+            --no-man-pages          \
+            -l "$BUILD_DIR/local"   \
+            $CPANM_OPTS             \
+            Carton@1.0.28           \
+            | indent
       fi
-      cpanm 2>&1                 \
-         --quiet                 \
-         --notest                \
-         --no-man-pages          \
-         -l "$BUILD_DIR/local"   \
-         "${EPAN[@]}"            \
-         $CPANM_OPTS             \
-         --installdeps .         \
-         | indent
+
+      echo "-----> Installing dependencies"
+      # declare -a EPAN
+      # local _d d
+      # for _d in epan dpan ; do
+      #    d="$PWD/$_d"
+      #    [ -d "$d" ] || continue
+      #    EPAN=("${EPAN[@]}" '--mirror' "file://$d")
+      # done
+      # if [ "${#EPAN[@]}" -gt 0 ] ; then
+      #    # append "usual" mirrors
+      #    EPAN=("${EPAN[@]}" '--mirror' 'http://www.cpan.org')
+      # fi
+
+      # TODO: Carton mirror, etc
+      carton install --deployment 2>&1 | indent
    )
 }
 
@@ -99,11 +112,19 @@ copy_local() {
 
 ensure_dir() {
    mkdir -p "$1"
-   readlink -f "$1"
+   greadlink -f "$1"
 }
 
 indent() {
-  sed -u 's/^/       /'
+  sed 's/^/       /'
 }
+
+# # because vendored perl is relocatable, shebang is not always correct
+# # https://github.com/Perl-Toolchain-Gang/ExtUtils-MakeMaker/issues/38
+# fixin_shebang() {
+#     for script in $BUILD_DIR/local/bin/* ; do
+#         perl -i -nle 's{^#!.*perl\s*$}{#!/usr/bin/env perl} unless $head++; print' $script
+#     done
+# }
 
 main "$@"

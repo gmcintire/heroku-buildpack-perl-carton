@@ -1,14 +1,16 @@
-Heroku/Dokku buildpack: Perl-Procfile
+Heroku/Dokku buildpack: Perl-Procfile-Carton
 =====================================
 
 This is a Heroku buildpack that makes it easy to run any Perl application
 (possibly a complex one with different components) from a `Procfile`.
 
-The difference in the approach versus e.g. [heroku-buildpack-perl][hbp] is
-that it does not assume that your application is necessarily a web one, so
-nothing gets installed in addition to what you setup. This can be e.g.
-useful even if you have a web application, but you want to run it with
-something different from Starman (e.g. use Hypnotoad with Mojolicious).
+This fork combines features from [heroku-buildpack-perl][hbp], the
+[carton branch of heroku-buildpack-perl][hbpc] and
+[heroku-buildpack-perl-procfile][hbpp]. Resulting in:
+
+- any tool can be run in Procfile (not just Starman or plackup)
+- vendored version of perl will be built based on .perl-version
+- modules will be installed using Carton and cpanfile.snapshot
 
 If your repository has a top-level sub-directory named either `epan` or
 `dpan`, it's assumed to have a CPAN-like directory structure inside (with
@@ -26,18 +28,18 @@ Example usage in Heroku (untested):
 
     $ ls
     cpanfile
+    cpanfile.snapshot
     Procfile
     lib/
 
     $ cat cpanfile
-    requires 'Plack', '1.0000';
-    requires 'DBI', '1.6';
+    requires Mojolicious => '7.00';
 
     $ cat Procfile
-    web: plackup --port $PORT -a app.psgi    
+    web: hypnotoad -f ./script/app.pl
 
     $ heroku create --stack cedar \
-       --buildpack https://github.com/polettix/heroku-buildpack-perl-procfile.git
+       --buildpack https://github.com/mvgrimes/heroku-buildpack-perl-carton.git
 
     $ git push heroku master
     ...
@@ -46,27 +48,32 @@ Example usage in Heroku (untested):
     -----> Perl/Procfile app detected
     -----> Installing dependencies
 
-The buildpack will detect that your perl-app has an `Procfile` in the root.
+The buildpack will detect that your perl-app has an `Procfile`
+and a `cpanfile.snapshot` in the root.
 
 Example usage in [Dokku][], using a `.buildpacks` file inside the
 repository:
 
     $ ls -a
     .buildpacks
-    cpanfile
     .git
+    .perl-version
+    cpanfile
+    cpanfile.snapshot
     Procfile
     lib/
 
     $ cat .buildpacks
-    https://github.com/polettix/heroku-buildpack-perl-procfile.git
+    https://github.com/mvgrimes/heroku-buildpack-perl-carton.git
+
+    $ cat .perl-version
+    5.22.2
 
     $ cat cpanfile
-    requires 'Plack', '1.0000';
-    requires 'DBI', '1.6';
+    requires Mojolicious => '7.00';
 
     $ cat Procfile
-    web: plackup --port $PORT -a app.psgi    
+    web: hypnotoad -f ./script/app.pl
 
     $ ssh dokku@your-node.example.com apps:create your-app
 
@@ -82,16 +89,15 @@ Alternatively, if you don't want to use the `.buildpacks` file inside the
 repo, you can use the suggestions provided in [custom buildpacks][]:
 
     $ ssh dokku@your-node.example.com config:set your-app \
-        BUILDPACK_URL=https://github.com/polettix/heroku-buildpack-perl-procfile.git
+        BUILDPACK_URL=https://github.com/mvgrimes/heroku-buildpack-perl-carton.git
 
 
 Libraries
 ---------
 
-Dependencies can be declared using `cpanfile` (recommended) or more
-traditional `Makefile.PL`, `Build.PL` and `META.json` (whichever you can
-install with `cpanm --installdeps`), and the buildpack will install these
-dependencies using [cpanm][] into `./local` directory.
+Dependencies can be declared using `cpanfile` (recommended) and
+`cpanfile.snapshot`, and the buildpack will install these dependencies using
+[carton][] into `./local` directory.
 
 You can ship your own *DarkPAN* modules by creating a subdirectory named either
 `epan` or `dpan` at the top level, and shaping it in a CPAN-compatible way.
@@ -123,3 +129,4 @@ patched versions of official modules.
 [custom buildpacks]: http://dokku.viewdocs.io/dokku/deployment/methods/buildpacks/#specifying-a-custom-buildpack
 [hbp]: https://github.com/miyagawa/heroku-buildpack-perl
 [hbpp]: https://github.com/kazeburo/heroku-buildpack-perl-procfile
+[hbpc]: https://github.com/miyagawa/heroku-buildpack-perl/tree/carton
