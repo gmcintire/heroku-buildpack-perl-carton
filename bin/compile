@@ -42,11 +42,19 @@ build() {
       [ -f "$ENV_DIR/PERL_CPANM_OPT" ] \
          && CPANM_OPTS="$(cat "$ENV_DIR/PERL_CPANM_OPT")"
 
-      # if [ -e "$BUILD_DIR/.perl-verion" ] ; then
-      #     PERL_VERSION=$( cat $BUILD_DIR/.perl-version )
-      #
-      #     if [ -
-      # fi
+      if [ -e "$BUILD_DIR/.perl-verion" ] ; then
+          PERL_VERSION=$( cat $BUILD_DIR/.perl-version )
+          echo "-----> Installing perl $PERL_VERSION"
+          VENDORED_PERL="$BUILD_DIR/vendor/perl-$PERL_VERSION"
+          PERL_PACKAGE=https://s3.amazonaws.com/dokku-perl/perl-$PERL_VERSION.tgz
+
+          if [ ! -e "$VENDORED_PERL" ] ; then
+              mkdir -p "$VENDORED_PERL"
+              curl $PERL_PACKAGE -s -o - | tar xvzf -c -C $VENDORED_PERL
+          fi
+
+          export PATH="$VENDORED_PERL/bin:$PATH"
+      fi
 
       if [ ! -e "$BUILD_DIR/local/bin/cpanm" ]; then
          echo "-----> Bootstrapping cpanm"
@@ -98,7 +106,7 @@ prepare_run_environment() {
 
    mkdir -p "$BUILD_DIR/.profile.d"
    cat > "$BUILD_DIR/.profile.d/perl-env.sh" <<'END'
-export PATH="$HOME/local/bin:$HOME/bin:$PATH"
+export PATH="$HOME/local/bin:$VENDORED_PERL/bin:$HOME/bin:$PATH"
 export PERL5LIB="$HOME/local/lib/perl5:$PERL5LIB"
 END
 }
