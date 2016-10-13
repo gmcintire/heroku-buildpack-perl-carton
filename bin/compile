@@ -50,7 +50,8 @@ build() {
 
           if [ ! -e "$VENDORED_PERL" ] ; then
               mkdir -p "$VENDORED_PERL"
-              curl $PERL_PACKAGE -s -o - | tar xvzf - -C $VENDORED_PERL
+              curl $PERL_PACKAGE -s -o - | tar xzf - -C $VENDORED_PERL
+              fixin_shebang "$VENDORED_PERL/bin/*"
           fi
 
           export PATH="$VENDORED_PERL/bin:$PATH"
@@ -66,6 +67,7 @@ build() {
                $CPANM_OPTS                \
                -l "$BUILD_DIR/local"      \
             | indent
+         fixin_shebang "$BUILD_DIR/local/bin/cpanm"
       fi
 
       if [ ! -e "$BUILD_DIR/local/bin/carton" ]; then
@@ -78,10 +80,11 @@ build() {
             $CPANM_OPTS             \
             Carton@1.0.28           \
             | indent
+         fixin_shebang "$BUILD_DIR/local/bin/carton"
       fi
 
       echo "-----> Fixing shebangs"
-      fixin_shebang
+      fixin_shebang "$BUILD_DIR/local/bin/*"
 
       echo "-----> Installing dependencies"
       # declare -a EPAN
@@ -132,7 +135,7 @@ indent() {
 # because vendored perl is relocatable, shebang is not always correct
 # https://github.com/Perl-Toolchain-Gang/ExtUtils-MakeMaker/issues/38
 fixin_shebang() {
-    for script in $BUILD_DIR/local/bin/* ; do
+    for script in $@ ; do
         perl -i -nle 's{^#!.*perl\s*$}{#!/usr/bin/env perl} unless $head++; print' $script
     done
 }
