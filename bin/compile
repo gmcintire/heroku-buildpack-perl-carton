@@ -42,7 +42,7 @@ build() {
       [ -f "$ENV_DIR/PERL_CPANM_OPT" ] \
          && CPANM_OPTS="$(cat "$ENV_DIR/PERL_CPANM_OPT")"
 
-      if [ -e "$BUILD_DIR/.perl-verion" ] ; then
+      if [ -e "$BUILD_DIR/.perl-version" ] ; then
           PERL_VERSION=$( cat $BUILD_DIR/.perl-version )
           echo "-----> Installing perl $PERL_VERSION"
           VENDORED_PERL="$BUILD_DIR/vendor/perl-$PERL_VERSION"
