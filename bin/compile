@@ -107,6 +107,9 @@ build() {
 prepare_run_environment() {
    local BUILD_DIR="$1"
 
+   local PERL_VERSION=$( cat $BUILD_DIR/.perl-version )
+   local VENDORED_PERL="$BUILD_DIR/vendor/perl-$PERL_VERSION"
+
    mkdir -p "$BUILD_DIR/.profile.d"
    cat > "$BUILD_DIR/.profile.d/perl-env.sh" <<END
 export PATH="\$HOME/local/bin:$VENDORED_PERL/bin:\$HOME/bin:\$PATH"
