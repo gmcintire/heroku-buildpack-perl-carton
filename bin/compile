@@ -50,7 +50,7 @@ build() {
 
           if [ ! -e "$VENDORED_PERL" ] ; then
               mkdir -p "$VENDORED_PERL"
-              curl $PERL_PACKAGE -s -o - | tar xvzf -c -C $VENDORED_PERL
+              curl $PERL_PACKAGE -s -o - | tar xvzf - -C $VENDORED_PERL
           fi
 
           export PATH="$VENDORED_PERL/bin:$PATH"
