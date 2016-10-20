@@ -117,8 +117,8 @@ export PERL5LIB="\$HOME/local/lib/perl5:\$PERL5LIB"
 END
 }
 
-copy_local() {  copy_dir "local" $@ }
-copy_vendor() { copy_dir "vendor" $@ }
+copy_local() {  copy_dir "local" $@; }
+copy_vendor() { copy_dir "vendor" $@; }
 copy_dir() {
    local SUBDIR="$1"
    local SOURCE_DIR="$2"
